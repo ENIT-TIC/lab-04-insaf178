@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  db:
+    image: alpine:3.20
+    volumes:
+      - db-data:/data
+      - ./db:/init:ro
+    command: >
+      sh -c "
+      apk add --no-cache sqlite &&
+      sqlite3 /data/app.db < /init/init.sql &&
+      echo 'SQLite initialized at /data/app.db' &&
+      tail -f /dev/null
+      "
+
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_PATH=/data/app.db
+    volumes:
+      - db-data:/data
+    depends_on:
+      - db
+
+volumes:
+  db-data:
